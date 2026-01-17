@@ -1,0 +1,41 @@
+# Core Dependencies
+python-dotenv==1.2.1
+pydantic==2.12.5
+PyYAML==6.0.3
+
+# LLM Providers
+openai==1.109.1
+anthropic==0.7.0
+requests==2.32.5
+
+# Data Processing
+numpy==1.26.4
+pandas==2.0.0
+
+# Database
+sqlalchemy==2.0.45
+psycopg2-binary==2.9.9
+
+# API
+httpx==0.28.1
+
+# Logging
+python-json-logger==2.0.7
+
+# CLI
+click==8.3.1
+rich==13.9.4
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Code Quality
+black==23.12.1
+flake8==6.1.0
+mypy==1.7.1
+
+# RLM Enterprise Features
+sentence-transformers>=2.2.0
+numpy>=1.24.0
+tiktoken>=0.5.0

@@ -1,0 +1,34 @@
+# Multi-Agent System Configuration
+
+# LLM Configuration
+llm:
+  provider: openai
+  model: gpt-4
+  temperature: 0.7
+  max_tokens: 2000
+
+# RLM Configuration
+rlm:
+  enabled: true
+  cache_responses: true
+  cache_dir: .rlm_cache
+  max_context_length: 2000
+  context_top_k: 3
+
+# Agent Configuration
+agents:
+  default_type: specialist
+  enable_memory: true
+  enable_tools: true
+
+# Workflow Configuration
+workflow:
+  type: sequential
+  verbose: true
+  timeout: 300
+
+# Logging Configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/multi_agent.log
