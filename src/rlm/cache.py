@@ -54,7 +54,20 @@ class RLMCache:
                 with open(cache_file, "r") as f:
                     data = json.load(f)
                     for key, value in data.items():
-                        self.cache[key] = CachedResponse(**value)
+                        timestamp = value.get("timestamp")
+                        if isinstance(timestamp, str):
+                            try:
+                                timestamp = datetime.fromisoformat(timestamp)
+                            except Exception:
+                                timestamp = datetime.now()
+                        self.cache[key] = CachedResponse(
+                            query_hash=value["query_hash"],
+                            query=value["query"],
+                            response=value["response"],
+                            tokens_saved=value.get("tokens_saved", 0),
+                            timestamp=timestamp,
+                            metadata=value.get("metadata", {})
+                        )
             except Exception as e:
                 print(f"⚠️  Failed to load cache: {e}")
     
@@ -94,6 +107,9 @@ class RLMCache:
                 self.access_order.remove(query_hash)
             self.access_order.append(query_hash)
             
+            if self.enable_compression:
+                cached.response = self._decompress(cached.response)
+
             return cached
         
         return None
@@ -106,7 +122,13 @@ class RLMCache:
         age_hours = (datetime.now() - cached.timestamp).total_seconds() / 3600
         return age_hours > self.ttl_hours
     
-    def set(self, query: str, response: str, tokens_saved: int = 0, metadata: Dict = None):
+    def set(
+        self,
+        query: str,
+        response: str,
+        tokens_saved: int = 0,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
         """Cache response with size limit and LRU eviction."""
         query_hash = self._get_query_hash(query)
         

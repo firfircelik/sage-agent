@@ -35,7 +35,5 @@ black==23.12.1
 flake8==6.1.0
 mypy==1.7.1
 
-# RLM Enterprise Features
-sentence-transformers>=2.2.0
-numpy>=1.24.0
-tiktoken>=0.5.0
+# RLM Enterprise Features (optional)
+# Install when needed: pip install sentence-transformers tiktoken

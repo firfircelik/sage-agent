@@ -11,21 +11,21 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
-    name="multi-agent-system",
+    name="sage-agent",
     version="1.0.0",
     author="Firat Celik",
     author_email="firatcelik@aol.com",
-    description="A powerful, token-efficient multi-agent AI system with RLM optimization",
+    description="Self-improving AI agent with RLM optimization for OpenCode and Claude Code",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/firfircelik/multi-agent-system",
+    url="https://github.com/firfircelik/sage-agent",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Development Status :: 4 - Beta",
@@ -33,7 +33,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=requirements,
     extras_require={
         "dev": [
@@ -46,7 +46,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "multi-agent-system=src.cli:main",
+            "sage-agent=cli:main",
         ],
     },
 )

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Multi-Agent RLM Installer
+# Sage Agent Installer
 # Automatic setup for OpenCode CLI and Claude Code CLI
 
-set -e
+set -euo pipefail
 
-echo "🚀 Multi-Agent RLM Installer"
+echo "🚀 Sage Agent Installer"
 echo "============================"
 echo ""
 
@@ -23,28 +23,106 @@ echo -e "${BLUE}Installation directory: ${INSTALL_DIR}${NC}"
 echo ""
 
 # Check Python
-echo "🔍 Checking Python..."
-if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}❌ Python 3 not found. Please install Python 3.8+${NC}"
+SUPPORTED_PYTHON=(3.12 3.11 3.10 3.9)
+PYTHON_BIN=""
+
+version_in_range() {
+    local version="$1"
+    local major minor
+    major=${version%%.*}
+    minor=${version#*.}
+    minor=${minor%%.*}
+    [[ "$major" -eq 3 && "$minor" -ge 9 && "$minor" -le 12 ]]
+}
+
+find_supported_python() {
+    for candidate in python3.12 python3.11 python3.10 python3.9 python3; do
+        if ! command -v "$candidate" >/dev/null 2>&1; then
+            continue
+        fi
+        local version
+        version=$("$candidate" --version | awk '{print $2}')
+        if version_in_range "$version"; then
+            PYTHON_BIN=$(command -v "$candidate")
+            echo "${GREEN}✅ Using Python ${version} (${candidate})${NC}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+install_pyenv() {
+    if command -v pyenv >/dev/null 2>&1; then
+        echo "${YELLOW}pyenv already installed${NC}"
+        return
+    fi
+    echo "${YELLOW}pyenv not found; installing now...${NC}"
+    if [[ "${OSTYPE}" == "darwin"* ]] && command -v brew >/dev/null 2>&1; then
+        brew install pyenv
+    else
+        curl https://pyenv.run | bash
+    fi
+    export PYENV_ROOT="${HOME}/.pyenv"
+    export PATH="${PYENV_ROOT}/bin:$PATH"
+    if command -v pyenv >/dev/null 2>&1; then
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+    fi
+}
+
+install_supported_python() {
+    install_pyenv
+    local target_version="3.12.2"
+    echo "${BLUE}Installing Python ${target_version} via pyenv...${NC}"
+    PYENV_ROOT="${HOME}/.pyenv"
+    export PYENV_ROOT
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    if ! command -v pyenv >/dev/null 2>&1; then
+        echo -e "${RED}❌ pyenv installation failed; please install Python 3.9-3.12 manually${NC}"
+        exit 1
+    fi
+    pyenv install -s "$target_version"
+    pyenv global "$target_version"
+    PYTHON_BIN="${PYENV_ROOT}/versions/${target_version}/bin/python"
+}
+
+echo "🔍 Checking supported Python..."
+if ! find_supported_python; then
+    echo -e "${YELLOW}No supported Python executable found; attempting to install with pyenv${NC}"
+    install_supported_python
+fi
+if [[ -z "${PYTHON_BIN}" ]]; then
+    echo -e "${RED}❌ Failed to locate or install a supported Python (3.9-3.12)${NC}"
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
-echo -e "${GREEN}✅ Python ${PYTHON_VERSION} found${NC}"
+PYTHON_VERSION=$("$PYTHON_BIN" --version | awk '{print $2}')
+echo -e "${GREEN}✅ Python ${PYTHON_VERSION} ready at ${PYTHON_BIN}${NC}"
 echo ""
 
 # Automatically install for both CLIs
 echo "📦 Installing for both OpenCode CLI and Claude Code CLI..."
 CLI_CHOICE=3
 
+# Create virtual environment
+echo ""
+echo "📦 Creating virtual environment..."
+if [ ! -d "${INSTALL_DIR}/venv" ]; then
+    "$PYTHON_BIN" -m venv "${INSTALL_DIR}/venv"
+    echo -e "${GREEN}✅ Virtual environment created${NC}"
+else
+    echo -e "${YELLOW}⚠️  Virtual environment already exists${NC}"
+fi
+
 # Install Python dependencies
 echo ""
 echo "📦 Installing Python dependencies..."
-pip3 install -r "${INSTALL_DIR}/requirements.txt" --quiet
+"${INSTALL_DIR}/venv/bin/pip" install -r "${INSTALL_DIR}/requirements.txt" --quiet
+echo -e "${GREEN}✅ Dependencies installed${NC}"
 
 # Optional: semantic search (skip by default - user can install later)
 echo ""
-echo "⏭️  Skipping semantic search (install later with: pip install sentence-transformers)"
+echo "⏭️  Skipping semantic search (install later with: ./venv/bin/pip install sentence-transformers)"
 
 # Setup API keys
 echo ""
@@ -85,6 +163,7 @@ case $CLI_CHOICE in
 #!/bin/bash
 cd "$(dirname "$0")"
 source .env 2>/dev/null || true
+source venv/bin/activate
 python3 cli.py "$@"
 EOF
         chmod +x "${INSTALL_DIR}/run.sh"
@@ -121,7 +200,7 @@ EOF
         fi
         
         # Add our MCP server
-        python3 << EOF
+        "$PYTHON_BIN" << EOF
 import json
 import sys
 
@@ -140,8 +219,8 @@ if "mcpServers" not in config:
     config["mcpServers"] = {}
 
 # Add our server
-config["mcpServers"]["multi-agent-rlm"] = {
-    "command": "python3",
+config["mcpServers"]["sage-agent"] = {
+    "command": f"{install_dir}/venv/bin/python3",
     "args": [f"{install_dir}/mcp_server.py"],
     "env": {
         "OPENAI_API_KEY": "",
@@ -175,6 +254,7 @@ EOF
 #!/bin/bash
 cd "$(dirname "$0")"
 source .env 2>/dev/null || true
+source venv/bin/activate
 python3 cli.py "$@"
 EOF
         chmod +x "${INSTALL_DIR}/run.sh"
@@ -190,7 +270,7 @@ EOF
         
         mkdir -p "$(dirname "$CLAUDE_CONFIG")"
         
-        python3 << EOF
+        "$PYTHON_BIN" << EOF
 import json
 
 config_file = "${CLAUDE_CONFIG}"
@@ -205,8 +285,8 @@ except:
 if "mcpServers" not in config:
     config["mcpServers"] = {}
 
-config["mcpServers"]["multi-agent-rlm"] = {
-    "command": "python3",
+config["mcpServers"]["sage-agent"] = {
+    "command": f"{install_dir}/venv/bin/python3",
     "args": [f"{install_dir}/mcp_server.py"],
     "env": {
         "OPENAI_API_KEY": "",
@@ -227,7 +307,7 @@ EOF
         echo "  ./run.sh --interactive"
         echo ""
         echo "Claude Code CLI:"
-        echo "  Restart Claude Code and use 'multi-agent-rlm' tool"
+        echo "  Restart Claude Code and use 'sage-agent' tool"
         ;;
         
     *)
@@ -239,7 +319,7 @@ esac
 # Create uninstaller
 cat > "${INSTALL_DIR}/uninstall.sh" << 'EOF'
 #!/bin/bash
-echo "🗑️  Uninstalling Multi-Agent RLM..."
+echo "🗑️  Uninstalling Sage Agent..."
 
 # Remove from Claude Code config
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -251,14 +331,14 @@ else
 fi
 
 if [ -f "$CLAUDE_CONFIG" ]; then
-    python3 << PYEOF
+    /usr/bin/env python3 << PYEOF
 import json
 config_file = "${CLAUDE_CONFIG}"
 try:
     with open(config_file, 'r') as f:
         config = json.load(f)
-    if "mcpServers" in config and "multi-agent-rlm" in config["mcpServers"]:
-        del config["mcpServers"]["multi-agent-rlm"]
+    if "mcpServers" in config and "sage-agent" in config["mcpServers"]:
+        del config["mcpServers"]["sage-agent"]
         with open(config_file, 'w') as f:
             json.dump(config, f, indent=2)
         print("✅ Removed from Claude Code config")
@@ -282,8 +362,6 @@ echo "=============================="
 echo ""
 echo "📚 Documentation:"
 echo "  - README.md - Main guide"
-echo "  - QUICKSTART.md - Quick start"
-echo "  - CLAUDE_CODE_SETUP.md - Claude Code details"
 echo ""
 echo "🔧 Installed files:"
 echo "  - .env - API keys"

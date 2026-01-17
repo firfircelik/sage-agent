@@ -1,6 +1,6 @@
-# Contributing to Multi-Agent RLM
+# Contributing to Sage
 
-Thank you for your interest in contributing to Multi-Agent RLM! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Sage! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
@@ -10,7 +10,7 @@ Be respectful, constructive, and professional in all interactions. We're buildin
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/firfircelik/multi-agent-rlm/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/firfircelik/sage-agent/issues)
 2. If not, create a new issue using the Bug Report template
 3. Provide as much detail as possible:
    - Steps to reproduce
@@ -31,8 +31,8 @@ Be respectful, constructive, and professional in all interactions. We're buildin
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/multi-agent-rlm.git
-   cd multi-agent-rlm
+   git clone https://github.com/YOUR_USERNAME/sage-agent.git
+   cd sage-agent
    ```
 
 2. **Create a feature branch**
@@ -140,4 +140,4 @@ If you have questions, feel free to:
 - Ask in pull request comments
 - Contact maintainers
 
-Thank you for contributing to Multi-Agent RLM!
+Thank you for contributing to Sage!

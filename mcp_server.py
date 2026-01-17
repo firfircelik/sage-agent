@@ -263,7 +263,7 @@ class MCPServer:
     
     def run(self):
         """Run MCP server (stdio mode)."""
-        print("Multi-Agent RLM MCP Server started", file=sys.stderr)
+        print("Sage Agent MCP Server started", file=sys.stderr)
         print("Available tools:", list(self.tools.keys()), file=sys.stderr)
         
         for line in sys.stdin:

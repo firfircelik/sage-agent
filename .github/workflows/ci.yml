@@ -1,70 +1,126 @@
-name: CI
+name: CI/CD
 
 on:
-  pull_request:
-    branches: [ main, develop ]
   push:
     branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: {}
+
+concurrency:
+  group: sage-agent-ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
+  lint-test:
+    name: Lint & Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-    
+        python-version: [ '3.9', '3.10', '3.11', '3.12' ]
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest black flake8
-    
-    - name: Check code formatting
-      run: |
-        black --check src/
-    
-    - name: Lint with flake8
-      run: |
-        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Run tests
-      run: |
-        python -m pytest tests/ -v || echo "No tests found yet"
-    
-    - name: Test imports
-      run: |
-        python -c "import sys; sys.path.insert(0, '.'); from src.rlm import EnterpriseRLM; print('✅ Imports successful')"
+      - uses: actions/checkout@v4
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt', 'setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov black==23.12.1 flake8==6.1.0 coverage
+
+      - name: Formatting check
+        run: black --check src/
+
+      - name: Lint
+        run: flake8 src/ --max-line-length=127
+
+      - name: Run tests with coverage
+        run: |
+          if [ -d tests ]; then
+            pytest --maxfail=1 --disable-warnings \
+              --cov=src --cov-report=xml:coverage-${{ matrix.python-version }}.xml
+          else
+            echo "No tests directory found; skipping pytest."
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage-${{ matrix.python-version }}.xml
 
   security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    
+    needs: lint-test
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install safety bandit
-    
-    - name: Check for security vulnerabilities
-      run: |
-        safety check --json || echo "Security check completed"
-    
-    - name: Run bandit security scan
-      run: |
-        bandit -r src/ -f json || echo "Bandit scan completed"
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install security tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install safety bandit
+
+      - name: Run safety audit
+        run: safety check --full-report
+
+      - name: Run bandit scan
+        run: |
+          bandit -r src/ -f json -o bandit-report.json
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: bandit-report.json
+
+  package:
+    name: Build Distributions
+    runs-on: ubuntu-latest
+    needs: [ lint-test, security ]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+          pip install -r requirements.txt
+
+      - name: Build artifacts
+        run: python -m build --sdist --wheel --outdir dist
+
+      - name: Upload distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist

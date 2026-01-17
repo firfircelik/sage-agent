@@ -1,11 +1,13 @@
-# Multi-Agent RLM System
+# Sage - Self-Improving AI Agent
 
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![CI](https://github.com/firfircelik/multi-agent-rlm/workflows/CI/badge.svg)](https://github.com/firfircelik/multi-agent-rlm/actions)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/firfircelik/multi-agent-rlm/pulls)
-[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://github.com/firfircelik/multi-agent-rlm)
+[![CI/CD](https://github.com/firfircelik/sage-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/firfircelik/sage-agent/actions)
+[![Release](https://img.shields.io/github/v/release/firfircelik/sage-agent?include_prereleases&sort=semver)](https://github.com/firfircelik/sage-agent/releases)
+[![Contributors](https://img.shields.io/github/contributors/firfircelik/sage-agent)](https://github.com/firfircelik/sage-agent/graphs/contributors)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/firfircelik/sage-agent/pulls)
+[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://github.com/firfircelik/sage-agent)
 
 A self-improving AI agent system with advanced token optimization for OpenCode CLI and Claude Code CLI. The agent learns from every interaction, never forgets, and continuously improves like an LLM.
 
@@ -102,7 +104,7 @@ AI-powered decision making:
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9-3.12
 - pip package manager
 
 ### Automatic Installation
@@ -110,8 +112,8 @@ AI-powered decision making:
 The installer automatically configures both OpenCode CLI and Claude Code CLI:
 
 ```bash
-git clone https://github.com/firfircelik/multi-agent-rlm.git
-cd multi-agent-rlm
+git clone https://github.com/firfircelik/sage-agent.git
+cd sage-agent
 bash install.sh
 ```
 
@@ -170,7 +172,7 @@ Available commands:
 After installation, the MCP server is automatically configured. Restart Claude Code and use:
 
 ```
-User: Can you use multi-agent-rlm to process this query?
+User: Can you use sage-agent to process this query?
 Query: "Explain JWT authentication implementation"
 ```
 
@@ -441,8 +443,8 @@ This is an open-source project and contributions are welcome. We appreciate bug 
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/multi-agent-rlm.git
-cd multi-agent-rlm
+git clone https://github.com/YOUR_USERNAME/sage-agent.git
+cd sage-agent
 
 # Install dependencies
 pip install -r requirements.txt
@@ -495,4 +497,4 @@ Special thanks to all contributors who help improve this project.
 
 ---
 
-**Status**: Production Ready | **Version**: 1.0.0 | **Python**: 3.8+ | **License**: MIT
+**Status**: Production Ready | **Version**: 1.0.0 | **Python**: 3.9-3.12 | **License**: MIT
