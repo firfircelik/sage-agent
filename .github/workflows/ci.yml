@@ -43,7 +43,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov black==23.12.1 flake8==6.1.0 coverage
+          pip install pytest pytest-cov black==24.3.0 flake8==6.1.0 coverage
 
       - name: Formatting check
         run: black --check src/

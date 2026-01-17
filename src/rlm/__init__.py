@@ -40,7 +40,6 @@ __all__ = [
     "TokenCounter",
     "ContextRetriever",
     "RLMEnabledLLMAgent",
-    
     # Enterprise
     "KnowledgeBase",
     "KnowledgeEntry",
@@ -48,17 +47,12 @@ __all__ = [
     "VectorEntry",
     "IntelligenceEngine",
     "UsagePattern",
-    
     # Self-Improving AI
     "LongTermMemory",
     "MemoryEntry",
     "SelfImprovementEngine",
-    
     # Advanced
     "AdvancedOptimizer",
     "AdaptiveCompressor",
     "EnterpriseRLM",
 ]
-
-
-

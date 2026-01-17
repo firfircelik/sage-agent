@@ -1,5 +1,5 @@
 """
-Setup configuration for Multi-Agent System
+Setup configuration for Sage Agent
 """
 
 from setuptools import setup, find_packages

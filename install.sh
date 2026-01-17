@@ -102,7 +102,6 @@ echo ""
 
 # Automatically install for both CLIs
 echo "📦 Installing for both OpenCode CLI and Claude Code CLI..."
-CLI_CHOICE=3
 
 # Create virtual environment
 echo ""
@@ -152,199 +151,39 @@ EOF
 
 setup_api_keys
 
-# Setup based on choice
-case $CLI_CHOICE in
-    1)
-        echo ""
-        echo "🔧 Setting up for OpenCode CLI..."
-        
-        # Create launcher script
-        cat > "${INSTALL_DIR}/run.sh" << 'EOF'
+echo ""
+echo "🔧 Setting up for both OpenCode and Claude Code..."
+
+# OpenCode setup
+cat > "${INSTALL_DIR}/run.sh" << 'EOF'
 #!/bin/bash
 cd "$(dirname "$0")"
 source .env 2>/dev/null || true
 source venv/bin/activate
-python3 cli.py "$@"
+python cli.py run "$@"
 EOF
-        chmod +x "${INSTALL_DIR}/run.sh"
-        
-        echo -e "${GREEN}✅ OpenCode CLI setup complete!${NC}"
-        echo ""
-        echo "To use:"
-        echo "  cd ${INSTALL_DIR}"
-        echo "  ./run.sh --interactive"
-        ;;
-        
-    2)
-        echo ""
-        echo "🔧 Setting up for Claude Code CLI..."
-        
-        # Detect Claude Code config location
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
-        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            CLAUDE_CONFIG="$HOME/.config/Claude/claude_desktop_config.json"
-        else
-            CLAUDE_CONFIG="$HOME/.claude/claude_desktop_config.json"
-        fi
-        
-        # Create config directory
-        mkdir -p "$(dirname "$CLAUDE_CONFIG")"
-        
-        # Read existing config or create new
-        if [ -f "$CLAUDE_CONFIG" ]; then
-            echo "📝 Updating existing Claude Code config..."
-            EXISTING_CONFIG=$(cat "$CLAUDE_CONFIG")
-        else
-            EXISTING_CONFIG='{"mcpServers":{}}'
-        fi
-        
-        # Add our MCP server
-        "$PYTHON_BIN" << EOF
-import json
-import sys
+chmod +x "${INSTALL_DIR}/run.sh"
 
-config_file = "${CLAUDE_CONFIG}"
-install_dir = "${INSTALL_DIR}"
+# Register OpenCode plugin + Claude MCP
+"${INSTALL_DIR}/venv/bin/python" "${INSTALL_DIR}/cli.py" install
 
-# Read existing config
-try:
-    with open(config_file, 'r') as f:
-        config = json.load(f)
-except:
-    config = {"mcpServers": {}}
+echo -e "${GREEN}✅ Both setups complete!${NC}"
+echo ""
+echo "OpenCode CLI:"
+echo "  cd ${INSTALL_DIR}"
+echo "  ./run.sh --interactive"
+echo ""
+echo "Claude Code CLI:"
+echo "  Restart Claude Code and use 'sage-agent' tool"
 
-# Ensure mcpServers exists
-if "mcpServers" not in config:
-    config["mcpServers"] = {}
-
-# Add our server
-config["mcpServers"]["sage-agent"] = {
-    "command": f"{install_dir}/venv/bin/python3",
-    "args": [f"{install_dir}/mcp_server.py"],
-    "env": {
-        "OPENAI_API_KEY": "",
-        "ANTHROPIC_API_KEY": "",
-        "DEEPSEEK_API_KEY": "",
-        "GLM_API_KEY": ""
-    }
-}
-
-# Save config
-with open(config_file, 'w') as f:
-    json.dump(config, f, indent=2)
-
-print(f"✅ MCP server added to {config_file}")
-EOF
-        
-        echo -e "${GREEN}✅ Claude Code CLI setup complete!${NC}"
-        echo ""
-        echo "To use:"
-        echo "  1. Restart Claude Code"
-        echo "  2. The 'multi-agent-rlm' tool will be available"
-        echo "  3. Ask Claude to use it: 'Can you use multi-agent-rlm to process this?'"
-        ;;
-        
-    3)
-        echo ""
-        echo "🔧 Setting up for both OpenCode and Claude Code..."
-        
-        # OpenCode setup
-        cat > "${INSTALL_DIR}/run.sh" << 'EOF'
-#!/bin/bash
-cd "$(dirname "$0")"
-source .env 2>/dev/null || true
-source venv/bin/activate
-python3 cli.py "$@"
-EOF
-        chmod +x "${INSTALL_DIR}/run.sh"
-        
-        # Claude Code setup
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
-        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            CLAUDE_CONFIG="$HOME/.config/Claude/claude_desktop_config.json"
-        else
-            CLAUDE_CONFIG="$HOME/.claude/claude_desktop_config.json"
-        fi
-        
-        mkdir -p "$(dirname "$CLAUDE_CONFIG")"
-        
-        "$PYTHON_BIN" << EOF
-import json
-
-config_file = "${CLAUDE_CONFIG}"
-install_dir = "${INSTALL_DIR}"
-
-try:
-    with open(config_file, 'r') as f:
-        config = json.load(f)
-except:
-    config = {"mcpServers": {}}
-
-if "mcpServers" not in config:
-    config["mcpServers"] = {}
-
-config["mcpServers"]["sage-agent"] = {
-    "command": f"{install_dir}/venv/bin/python3",
-    "args": [f"{install_dir}/mcp_server.py"],
-    "env": {
-        "OPENAI_API_KEY": "",
-        "ANTHROPIC_API_KEY": "",
-        "DEEPSEEK_API_KEY": "",
-        "GLM_API_KEY": ""
-    }
-}
-
-with open(config_file, 'w') as f:
-    json.dump(config, f, indent=2)
-EOF
-        
-        echo -e "${GREEN}✅ Both setups complete!${NC}"
-        echo ""
-        echo "OpenCode CLI:"
-        echo "  cd ${INSTALL_DIR}"
-        echo "  ./run.sh --interactive"
-        echo ""
-        echo "Claude Code CLI:"
-        echo "  Restart Claude Code and use 'sage-agent' tool"
-        ;;
-        
-    *)
-        echo -e "${RED}Invalid choice${NC}"
-        exit 1
-        ;;
-esac
-
-# Create uninstaller
 cat > "${INSTALL_DIR}/uninstall.sh" << 'EOF'
 #!/bin/bash
 echo "🗑️  Uninstalling Sage Agent..."
 
-# Remove from Claude Code config
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    CLAUDE_CONFIG="$HOME/.config/Claude/claude_desktop_config.json"
+if [ -x "$(dirname "$0")/venv/bin/python" ]; then
+    "$(dirname "$0")/venv/bin/python" "$(dirname "$0")/cli.py" uninstall
 else
-    CLAUDE_CONFIG="$HOME/.claude/claude_desktop_config.json"
-fi
-
-if [ -f "$CLAUDE_CONFIG" ]; then
-    /usr/bin/env python3 << PYEOF
-import json
-config_file = "${CLAUDE_CONFIG}"
-try:
-    with open(config_file, 'r') as f:
-        config = json.load(f)
-    if "mcpServers" in config and "sage-agent" in config["mcpServers"]:
-        del config["mcpServers"]["sage-agent"]
-        with open(config_file, 'w') as f:
-            json.dump(config, f, indent=2)
-        print("✅ Removed from Claude Code config")
-except:
-    pass
-PYEOF
+    echo "⚠️  Python virtualenv not found. Remove integrations manually."
 fi
 
 echo "✅ Uninstall complete"
@@ -369,11 +208,7 @@ echo "  - run.sh - OpenCode launcher (if selected)"
 echo "  - uninstall.sh - Uninstaller"
 echo ""
 echo "💡 Next steps:"
-if [[ $CLI_CHOICE == "1" ]] || [[ $CLI_CHOICE == "3" ]]; then
-    echo "  ./run.sh --interactive"
-fi
-if [[ $CLI_CHOICE == "2" ]] || [[ $CLI_CHOICE == "3" ]]; then
-    echo "  Restart Claude Code"
-fi
+echo "  ./run.sh --interactive"
+echo "  Restart Claude Code"
 echo ""
 echo "🎉 Happy coding!"

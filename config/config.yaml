@@ -1,4 +1,4 @@
-# Multi-Agent System Configuration
+# Sage Agent Configuration
 
 # LLM Configuration
 llm:
@@ -31,4 +31,4 @@ workflow:
 logging:
   level: INFO
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  file: logs/multi_agent.log
+  file: logs/sage_agent.log

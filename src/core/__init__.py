@@ -1,5 +1,5 @@
 """
-Core module for multi-agent system.
+Core module for Sage Agent system.
 """
 
 from .agent import Agent, AgentType, Memory, WorkflowType

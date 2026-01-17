@@ -134,6 +134,10 @@ dmypy.json
 .rlm_cache/
 rlm_cache/
 
+# OpenCode/Claude local config
+.opencode/
+.claude/
+
 # Project specific
 logs/
 *.json

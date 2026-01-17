@@ -1,11 +1,14 @@
 # Sage - Self-Improving AI Agent
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support%20creator-orange)](https://buymeacoffee.com/firatcelik3)
 [![Python](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![CI/CD](https://github.com/firfircelik/sage-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/firfircelik/sage-agent/actions)
 [![Release](https://img.shields.io/github/v/release/firfircelik/sage-agent?include_prereleases&sort=semver)](https://github.com/firfircelik/sage-agent/releases)
 [![Contributors](https://img.shields.io/github/contributors/firfircelik/sage-agent)](https://github.com/firfircelik/sage-agent/graphs/contributors)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/firfircelik?label=Sponsors)](https://github.com/sponsors/firfircelik)
+[![Discussions](https://img.shields.io/github/discussions/firfircelik/sage-agent)](https://github.com/firfircelik/sage-agent/discussions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/firfircelik/sage-agent/pulls)
 [![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://github.com/firfircelik/sage-agent)
 
@@ -26,12 +29,13 @@ Contributions welcome! See [Contributing](#contributing) for guidelines.
 - [Architecture](#architecture)
 - [Configuration](#configuration)
 - [Performance](#performance)
+- [Community & Support](#community--support)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
 
-Multi-Agent RLM is a self-improving AI system that learns from every interaction. The agent maintains long-term memory, validates responses to prevent hallucinations, and continuously improves its performance through pattern learning and feedback analysis.
+Sage Agent is a self-improving AI system that learns from every interaction. The agent maintains long-term memory, validates responses to prevent hallucinations, and continuously improves its performance through pattern learning and feedback analysis.
 
 ### Core Capabilities
 
@@ -117,14 +121,30 @@ cd sage-agent
 bash install.sh
 ```
 
+### Plugin Installation (recommended)
+
+After installing dependencies, register Sage Agent as an OpenCode plugin and Claude MCP:
+
+```bash
+sage-agent install
+# or without package install
+python cli.py install
+```
+
+Useful commands:
+
+```bash
+sage-agent doctor
+sage-agent uninstall
+```
+
 The installer will:
 1. Verify Python installation
 2. Install required dependencies
-3. Configure for both OpenCode CLI and Claude Code CLI
-4. Create .env template file
-5. Set up launcher scripts
-6. Configure MCP server for Claude Code
-7. Create uninstall script
+3. Create .env template file
+4. Set up launcher scripts
+5. Register OpenCode plugin and Claude MCP
+6. Create uninstall script
 
 After installation, edit `.env` file to add your API keys:
 
@@ -150,7 +170,7 @@ GLM_API_KEY=...
 EOF
 
 # Run the system
-python cli.py --interactive
+python cli.py run --interactive
 ```
 
 ## Quick Start
@@ -159,6 +179,8 @@ python cli.py --interactive
 
 ```bash
 ./run.sh --interactive
+# or if installed as a package
+sage-agent run --interactive
 ```
 
 Available commands:
@@ -352,6 +374,11 @@ RLMEnabledLLMAgent (Base)
 ## Configuration
 
 ### Environment Variables
+
+Schema and example files:
+
+- config/sage-agent.schema.json
+- config/sage-agent.example.json
 
 Create a `.env` file in the project root:
 

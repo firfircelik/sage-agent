@@ -1,5 +1,5 @@
 """
-LLM module for multi-agent system.
+LLM module for Sage Agent system.
 """
 
 from .providers import (
@@ -13,7 +13,7 @@ from .providers import (
     DeepSeekProvider,
     GLMProvider,
     OpenCodeProvider,
-    LLMFactory
+    LLMFactory,
 )
 from .agent import LLMAgent
 
