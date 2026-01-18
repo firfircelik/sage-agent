@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Sage Agent Installer
-# Automatic setup for OpenCode CLI and Claude Code CLI
+# Automatic setup for OpenCode CLI and Claude Code CLI with HTTP Server
 
 set -euo pipefail
 
-echo "🚀 Sage Agent Installer"
-echo "============================"
+echo "🚀 Sage Agent Installer (Production Edition)"
+echo "========================================="
 echo ""
 
 # Colors
@@ -100,11 +100,21 @@ PYTHON_VERSION=$("$PYTHON_BIN" --version | awk '{print $2}')
 echo -e "${GREEN}✅ Python ${PYTHON_VERSION} ready at ${PYTHON_BIN}${NC}"
 echo ""
 
+# Check Bun
+echo "🔍 Checking Bun..."
+if ! command -v bun >/dev/null 2>&1; then
+    echo -e "${RED}❌ Bun not found. Please install: curl -fsSL https://bun.sh/install | bash${NC}"
+    exit 1
+fi
+BUN_VERSION=$(bun --version)
+echo -e "${GREEN}✅ Bun ${BUN_VERSION} found${NC}"
+echo ""
+
 # Automatically install for both CLIs
 echo "📦 Installing for both OpenCode CLI and Claude Code CLI..."
+echo ""
 
 # Create virtual environment
-echo ""
 echo "📦 Creating virtual environment..."
 if [ ! -d "${INSTALL_DIR}/venv" ]; then
     "$PYTHON_BIN" -m venv "${INSTALL_DIR}/venv"
@@ -114,13 +124,11 @@ else
 fi
 
 # Install Python dependencies
-echo ""
 echo "📦 Installing Python dependencies..."
 "${INSTALL_DIR}/venv/bin/pip" install -r "${INSTALL_DIR}/requirements.txt" --quiet
 echo -e "${GREEN}✅ Dependencies installed${NC}"
 
-# Optional: semantic search (skip by default - user can install later)
-echo ""
+# Optional: semantic search
 echo "⏭️  Skipping semantic search (install later with: ./venv/bin/pip install sentence-transformers)"
 
 # Setup API keys
@@ -144,6 +152,10 @@ OPENAI_API_KEY=""
 ANTHROPIC_API_KEY=""
 DEEPSEEK_API_KEY=""
 GLM_API_KEY=""
+
+# HTTP Server Configuration
+SAGE_API_HOST=localhost
+SAGE_API_PORT=8000
 EOF
     
     echo -e "${GREEN}✅ .env file created (edit it to add your API keys)${NC}"
@@ -151,10 +163,68 @@ EOF
 
 setup_api_keys
 
+# Install TypeScript dependencies and build plugin
 echo ""
-echo "🔧 Setting up for both OpenCode and Claude Code..."
+echo "📦 Installing TypeScript dependencies..."
+cd "${INSTALL_DIR}/opencode-plugin"
+bun install 2>&1 | tail -5
+echo -e "${GREEN}✅ TypeScript dependencies installed${NC}"
+
+echo ""
+echo "🔨 Building OpenCode plugin..."
+bun run build 2>&1 | tail -10
+echo -e "${GREEN}✅ OpenCode plugin built successfully${NC}"
+cd "${INSTALL_DIR}"
+
+# Create HTTP server launcher
+echo ""
+echo "🚀 Creating HTTP server launcher..."
+cat > "${INSTALL_DIR}/start-server.sh" << 'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+source .env 2>/dev/null || true
+source venv/bin/activate
+
+# Check if port is in use
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Port 8000 is already in use. Killing existing process..."
+    lsof -ti :8000 | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+
+echo "🚀 Starting Sage Agent HTTP Server..."
+echo "📊 API Documentation: http://localhost:8000/docs"
+echo "📖 ReDoc: http://localhost:8000/redoc"
+echo "💚 Health Check: http://localhost:8000/health"
+echo ""
+python src/http_server.py
+EOF
+chmod +x "${INSTALL_DIR}/start-server.sh"
+
+# Start HTTP server in background
+echo ""
+echo "🚀 Starting HTTP server in background..."
+nohup bash "${INSTALL_DIR}/start-server.sh" > "${INSTALL_DIR}/logs/server.log" 2>&1 &
+SERVER_PID=$!
+
+# Wait for server to start
+sleep 3
+
+# Check if server started
+if ps -p $SERVER_PID > /dev/null; then
+    echo -e "${GREEN}✅ HTTP server started (PID: $SERVER_PID)${NC}"
+    echo -e "${GREEN}✅ Server running on http://localhost:8000${NC}"
+else
+    echo -e "${RED}❌ Failed to start HTTP server${NC}"
+    echo "Check logs: tail -f ${INSTALL_DIR}/logs/server.log"
+fi
+
+# Create logs directory
+mkdir -p "${INSTALL_DIR}/logs"
 
 # OpenCode setup
+echo ""
+echo "🔧 Setting up OpenCode launcher..."
 cat > "${INSTALL_DIR}/run.sh" << 'EOF'
 #!/bin/bash
 cd "$(dirname "$0")"
@@ -165,20 +235,78 @@ EOF
 chmod +x "${INSTALL_DIR}/run.sh"
 
 # Register OpenCode plugin + Claude MCP
+echo ""
+echo "📝 Registering plugin in OpenCode CLI..."
 "${INSTALL_DIR}/venv/bin/python" "${INSTALL_DIR}/cli.py" install
 
-echo -e "${GREEN}✅ Both setups complete!${NC}"
+# Verify installation
 echo ""
-echo "OpenCode CLI:"
+echo "🔍 Verifying installation..."
+sleep 2
+DOCTOR_OUTPUT=$("${INSTALL_DIR}/venv/bin/python" "${INSTALL_DIR}/cli.py" doctor)
+echo "$DOCTOR_OUTPUT" | grep -q '"opencode_plugin_registered": true' && \
+    echo -e "${GREEN}✅ OpenCode CLI: Plugin registered successfully${NC}" || \
+    echo -e "${YELLOW}⚠️  OpenCode CLI: Plugin registration may need manual verification${NC}"
+
+echo "$DOCTOR_OUTPUT" | grep -q '"claude_mcp_registered": true' && \
+    echo -e "${GREEN}✅ Claude Code CLI: MCP server registered successfully${NC}" || \
+    echo -e "${YELLOW}⚠️  Claude Code CLI: MCP server registration may need manual verification${NC}"
+
+# Check HTTP server health
+sleep 2
+if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ HTTP Server: Running and healthy${NC}"
+else
+    echo -e "${YELLOW}⚠️  HTTP Server: Starting (check logs)${NC}"
+fi
+
+echo ""
+echo -e "${GREEN}✅ Installation complete!${NC}"
+echo ""
+echo "📍 Plugin Location:"
+echo "  ${INSTALL_DIR}/opencode-plugin/"
+echo ""
+echo "🎯 OpenCode CLI Integration:"
+echo "  Config: ~/.config/opencode/opencode.json"
+echo "  Usage: sage --interactive"
+echo "         sage --list-models"
+echo "         sage-stats"
+echo ""
+echo "🎯 Claude Code CLI Integration:"
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+    echo "  Config: ~/Library/Application Support/Claude/claude_desktop_config.json"
+else
+    echo "  Config: ~/.config/Claude/claude_desktop_config.json"
+fi
+echo "  Usage: Use 'sage-agent' MCP tool in Claude Code"
+echo "         Available tools: process_query, remember_interaction,"
+echo "         provide_feedback, add_knowledge, get_stats, etc."
+echo ""
+echo "🚀 HTTP Server:"
+echo "  URL: http://localhost:8000"
+echo "  Docs: http://localhost:8000/docs"
+echo "  PID: $SERVER_PID"
+echo "  Logs: ${INSTALL_DIR}/logs/server.log"
+echo ""
+echo "💡 Verify Installation:"
 echo "  cd ${INSTALL_DIR}"
-echo "  ./run.sh --interactive"
+echo "  ./venv/bin/python cli.py doctor"
 echo ""
-echo "Claude Code CLI:"
-echo "  Restart Claude Code and use 'sage-agent' tool"
 
 cat > "${INSTALL_DIR}/uninstall.sh" << 'EOF'
 #!/bin/bash
 echo "🗑️  Uninstalling Sage Agent..."
+
+# Stop HTTP server
+if [ -f "$(dirname "$0")/logs/server.pid" ]; then
+    PID=$(cat "$(dirname "$0")/logs/server.pid" 2>/dev/null || echo "")
+    if [ ! -z "$PID" ]; then
+        kill $PID 2>/dev/null || true
+    fi
+fi
+
+# Kill server on port 8000
+lsof -ti :8000 | xargs kill -9 2>/dev/null || true
 
 if [ -x "$(dirname "$0")/venv/bin/python" ]; then
     "$(dirname "$0")/venv/bin/python" "$(dirname "$0")/cli.py" uninstall
@@ -193,22 +321,35 @@ EOF
 
 chmod +x "${INSTALL_DIR}/uninstall.sh"
 
+# Save server PID
+echo $SERVER_PID > "${INSTALL_DIR}/logs/server.pid"
+
 # Summary
 echo ""
-echo "=============================="
+echo "========================================="
 echo -e "${GREEN}✅ Installation Complete!${NC}"
-echo "=============================="
+echo "========================================="
 echo ""
 echo "📚 Documentation:"
 echo "  - README.md - Main guide"
+echo "  - opencode-plugin/README.md - Plugin usage"
 echo ""
 echo "🔧 Installed files:"
 echo "  - .env - API keys"
-echo "  - run.sh - OpenCode launcher (if selected)"
+echo "  - start-server.sh - HTTP server launcher"
+echo "  - run.sh - OpenCode launcher"
 echo "  - uninstall.sh - Uninstaller"
 echo ""
 echo "💡 Next steps:"
-echo "  ./run.sh --interactive"
-echo "  Restart Claude Code"
+echo "  1. Add API keys: nano .env"
+echo "  2. Start OpenCode: ./run.sh --interactive"
+echo "  3. Restart Claude Code to see MCP tool"
+echo "  4. Check HTTP server health: curl http://localhost:8000/health"
+echo "  5. View API docs: open http://localhost:8000/docs"
+echo ""
+echo "🚀 Server Management:"
+echo "  Start: ./start-server.sh"
+echo "  Stop: kill $(cat logs/server.pid)"
+echo "  Logs: tail -f logs/server.log"
 echo ""
 echo "🎉 Happy coding!"
