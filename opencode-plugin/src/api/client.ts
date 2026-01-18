@@ -23,7 +23,7 @@ export class SageAgentClient {
   private baseURL: string;
   private timeout: number;
   private retries: number;
-  private cache: LRUCache<APIResponse>;
+  private cache: LRUCache<any>;
   private enableCache: boolean;
 
   constructor(config: Partial<ClientConfig> = {}) {
@@ -84,7 +84,7 @@ export class SageAgentClient {
 
         const data = (await response.json()) as T;
 
-        if (useCache && options.method !== 'POST' && (data as any).success) {
+        if (useCache && options.method !== 'POST') {
           this.cache.set(cacheKey, data, 300000);
         }
 

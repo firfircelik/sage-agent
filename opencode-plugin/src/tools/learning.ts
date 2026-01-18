@@ -8,6 +8,7 @@ import { getClient } from '../api/client.js';
 export const sageGetPatterns = tool({
   description:
     'View learned patterns and discovered insights. Shows what the agent has learned from all interactions, including success strategies, common mistakes, and optimal approaches.',
+  args: {},
   async execute() {
     try {
       const client = getClient();

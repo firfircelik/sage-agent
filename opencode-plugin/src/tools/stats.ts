@@ -8,6 +8,7 @@ import { getClient } from '../api/client.js';
 export const sageGetStats = tool({
   description:
     'Get comprehensive statistics including token optimization results, memory size, quality trends, and performance metrics.',
+  args: {},
   async execute() {
     try {
       const client = getClient();
@@ -76,6 +77,7 @@ export const sageGetStats = tool({
 export const sageOptimizationInsights = tool({
   description:
     'Get detailed token optimization insights showing compression strategies, cache performance, and recommendations for further optimization.',
+  args: {},
   async execute() {
     try {
       const client = getClient();
@@ -138,6 +140,7 @@ export const sageOptimizationInsights = tool({
 export const sageHealthCheck = tool({
   description:
     'Check Sage Agent API health, uptime, and server metrics. Verifies the backend is running optimally.',
+  args: {},
   async execute() {
     try {
       const client = getClient();

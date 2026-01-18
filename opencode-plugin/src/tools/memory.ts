@@ -5,7 +5,7 @@
 import { tool } from '@opencode-ai/plugin';
 import { getClient } from '../api/client.js';
 
-export const sageRecallMemory = tool({
+export const sageRecallMemory: any = tool({
   description:
     'Recall similar past interactions from long-term memory. Instantly retrieves related queries and responses (<1ms). Essential for leveraging learned experiences.',
   args: {
@@ -61,7 +61,7 @@ export const sageRecallMemory = tool({
   },
 });
 
-export const sageAddInteraction = tool({
+export const sageAddInteraction: any = tool({
   description:
     'Manually add an interaction to long-term memory for learning. The agent will validate, learn patterns, and prevent future mistakes.',
   args: {
@@ -120,7 +120,7 @@ export const sageAddInteraction = tool({
   },
 });
 
-export const sageProvideFeedback = tool({
+export const sageProvideFeedback: any = tool({
   description:
     'Provide feedback on an interaction for continuous self-improvement. Feedback directly influences learning patterns and prevents similar mistakes.',
   args: {

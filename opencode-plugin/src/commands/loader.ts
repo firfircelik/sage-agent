@@ -66,7 +66,7 @@ export async function loadCommands(): Promise<ParsedCommand[]> {
       });
     }
   } catch (error) {
-    console.error('Error loading commands:', error);
+    // Error loading commands - will use empty list
   }
 
   return commands;

@@ -5,7 +5,7 @@
 import { tool } from '@opencode-ai/plugin';
 import { getClient } from '../api/client.js';
 
-export const sageSearchKnowledge = tool({
+export const sageSearchKnowledge: any = tool({
   description:
     'Search the structured knowledge base for relevant information. Knowledge base contains validated, prioritized entries added by users.',
   args: {
@@ -73,7 +73,7 @@ export const sageSearchKnowledge = tool({
   },
 });
 
-export const sageAddKnowledge = tool({
+export const sageAddKnowledge: any = tool({
   description:
     'Add structured knowledge to the knowledge base. Entries are validated, categorized, and made available for future queries.',
   args: {

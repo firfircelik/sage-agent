@@ -5,7 +5,7 @@
 import { tool } from '@opencode-ai/plugin';
 import { getClient } from '../api/client.js';
 
-export const sageProcessQuery = tool({
+export const sageProcessQuery: any = tool({
   description:
     'Process a query with Sage Agent self-improving AI, RLM optimization, and long-term memory. Returns optimized response with token savings, memory recall, and improvement suggestions.',
   args: {
@@ -49,7 +49,7 @@ export const sageProcessQuery = tool({
         result += `💰 Tokens saved: ${data.tokens_saved}\n\n`;
       } else {
         result += `🔄 New query processed with RLM optimization\n`;
-        result += `💰 Tokens saved: ${data.tokens_saved}\n\n`;
+        result += `💰 Tokens saved: ${data?.tokens_saved || 0}\n\n`;
       }
 
       if (data?.context_enhanced) {
@@ -84,7 +84,7 @@ export const sageProcessQuery = tool({
   },
 });
 
-export const sageStreamQuery = tool({
+export const sageStreamQuery: any = tool({
   description:
     'Process a query with real-time streaming, showing progress updates and partial results as they arrive.',
   args: {
